@@ -1,0 +1,61 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { withBase } from '../../utils/posts';
+
+const posts = await getCollection('blog', ({ data }) => !data.draft);
+const tagCounts: Record<string, number> = {};
+for (const post of posts) {
+  for (const tag of post.data.tags) {
+    tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+  }
+}
+
+const tags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]);
+---
+
+<BaseLayout title="标签">
+  <h1 class="page-title">文章标签 ({tags.length})</h1>
+  <div class="tags-cloud">
+    {
+      tags.map(([tag, count]) => (
+        <a href={withBase(`/tags/${tag}/`)} class="tag-card">
+          <span class="tag-name">#{tag}</span>
+          <span class="tag-count">{count} 篇</span>
+        </a>
+      ))
+    }
+  </div>
+</BaseLayout>
+
+<style>
+  .page-title {
+    font-size: 1.5rem;
+    margin-bottom: 28px;
+  }
+
+  .tags-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .tag-card {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--tag-bg);
+  }
+
+  .tag-name {
+    font-weight: 600;
+  }
+
+  .tag-count {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+  }
+</style>

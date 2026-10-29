@@ -1,0 +1,62 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getPostUrl, formatDate } from '../../utils/posts';
+
+export async function getStaticPaths() {
+  const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
+    (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+  );
+  const tags = [...new Set(posts.flatMap((post) => post.data.tags))];
+  return tags.map((tag) => ({
+    params: { tag },
+    props: {
+      tag,
+      posts: posts.filter((p) => p.data.tags.includes(tag)),
+    },
+  }));
+}
+
+const { tag, posts } = Astro.props;
+---
+
+<BaseLayout title={`标签: #${tag}`}>
+  <h1 class="page-title">#{tag} ({posts.length} 篇)</h1>
+  <ul class="archive-list">
+    {
+      posts.map((post) => (
+        <li class="archive-item">
+          <time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate)}</time>
+          <a href={getPostUrl(post)}>{post.data.title}</a>
+        </li>
+      ))
+    }
+  </ul>
+</BaseLayout>
+
+<style>
+  .page-title {
+    font-size: 1.5rem;
+    margin-bottom: 28px;
+  }
+
+  .archive-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .archive-item {
+    display: flex;
+    align-items: baseline;
+    gap: 18px;
+  }
+
+  .archive-item time {
+    font-family: monospace;
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+</style>
